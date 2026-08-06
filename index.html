@@ -56,6 +56,12 @@
     border:1px dashed var(--ink-faint);padding:6px 12px;transform:rotate(-2deg);
     white-space:nowrap;
   }
+  .daily-quote{
+    font-family:var(--font-mono);font-size:13px;color:var(--ink);
+    border-left:3px solid var(--rust);padding:10px 14px;margin:18px 0 0;
+    background:var(--surface);font-style:normal;line-height:1.5;
+  }
+  .daily-quote::before{content:"“";color:var(--rust);font-family:var(--font-display);font-size:16px;margin-right:2px;}
   nav.tabs{display:flex;gap:6px;margin:24px 0 28px;flex-wrap:wrap;}
   nav.tabs button{
     font-family:var(--font-display);font-size:14px;letter-spacing:0.5px;
@@ -201,6 +207,46 @@ function findFoodKcalPer100g(name){
   if(FOOD_DB[key]!==undefined) return FOOD_DB[key];
   const match = Object.keys(FOOD_DB).find(k=> k===key || k.startsWith(key) && key.length>3);
   return match ? FOOD_DB[match] : null;
+}
+
+const MOTIVATIONAL_QUOTES = [
+  "La costanza batte la motivazione, ogni singola volta.",
+  "Non conta l'allenamento perfetto, conta quello fatto.",
+  "Il corpo che vuoi si costruisce nei giorni in cui non ne hai voglia.",
+  "Ogni serie in più è un investimento che nessuno può portarti via.",
+  "Il progresso è silenzioso: si vede dopo, non durante.",
+  "Oggi basta essere un po' meglio di ieri, non perfetti.",
+  "La disciplina è scegliere tra quello che vuoi ora e quello che vuoi davvero.",
+  "Chi si allena quando è stanco, cresce più di chi si allena quando è motivato.",
+  "Un allenamento saltato non si recupera mai davvero: si va avanti.",
+  "Il peso sulla barra conta meno della costanza con cui torni.",
+  "Nessun cambiamento è arrivato da una settimana perfetta, ma da mesi imperfetti fatti bene.",
+  "La forma fisica è un lavoro part-time che dura tutta la vita.",
+  "Meglio venti minuti fatti che l'ora perfetta rimandata.",
+  "Il corpo si adatta a quello che gli chiedi con costanza, non a quello che desideri.",
+  "Ogni PR di oggi è nato da un giorno qualunque di qualche mese fa.",
+  "Non serve sentirsi pronti, serve iniziare comunque.",
+  "L'unico allenamento che non funziona è quello che non fai.",
+  "Il recupero fa parte dell'allenamento tanto quanto lo sforzo.",
+  "Piccoli progressi ripetuti battono grandi sforzi occasionali.",
+  "Sei più vicino all'obiettivo di ieri, anche se oggi non lo senti.",
+  "La disciplina che nessuno vede è quella che costruisce i risultati che tutti notano.",
+  "Non paragonarti a chi ha iniziato prima di te: paragonati a chi eri un mese fa.",
+  "Un pasto equilibrato in più conta più di una dieta perfetta mai iniziata.",
+  "La versione migliore di te si allena anche quando non ne ha voglia.",
+  "Ogni chilo spostato con criterio è un mattone, non un miracolo.",
+  "Non esiste il giorno giusto per iniziare, esiste solo oggi.",
+  "Il corpo ricorda ogni allenamento, anche quelli mediocri fatti con costanza.",
+  "Rallentare va bene, fermarsi del tutto è la sola cosa da evitare.",
+  "Chi si presenta sempre, prima o poi, vince su chi si presenta solo quando è ispirato.",
+  "La forza non si vede il giorno in cui la costruisci, ma il giorno in cui serve."
+];
+
+function getDailyQuote(){
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now - startOfYear) / 86400000);
+  return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
 }
 
 let state = { workouts: [], plan: {}, diet: {}, progress: [], photos: [] };
@@ -445,6 +491,7 @@ function render(){
       </div>
       <div class="date-stamp">${formatDateLong(new Date())}</div>
     </div>
+    <p class="daily-quote">${escapeHTML(getDailyQuote())}</p>
     <nav class="tabs">
       <button data-tab="diario" class="${activeTab==='diario'?'active':''}">Diario</button>
       <button data-tab="scheda" class="${activeTab==='scheda'?'active':''}">Scheda</button>

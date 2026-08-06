@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ghisa-v1';
+const CACHE_NAME = 'ghisa-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
