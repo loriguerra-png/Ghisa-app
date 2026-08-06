@@ -289,7 +289,8 @@ function defaultDiet(){
     'Spuntino mattina': [{food:'Frutta + fonte proteica (yogurt o mandorle)', qty:'', kcal:250}],
     'Pranzo': [{food:'Pranzo dal padre: proteine + carboidrati + insalata cruda', qty:'', kcal:750}],
     'Spuntino pomeriggio': [{food:'Proteine in polvere + banana, oppure pane e affettato magro', qty:'', kcal:300}],
-    'Cena': [{food:'Proteina abbondante + carboidrati + insalata cruda (stima se meno controllabile)', qty:'', kcal:1150}]
+    'Cena': [{food:'Proteina abbondante + carboidrati + insalata cruda (stima se meno controllabile)', qty:'', kcal:1150}],
+    'integratori': []
   });
   return Object.fromEntries(DAYS.map(d=>[d, dayMeals()]));
 }
@@ -311,6 +312,7 @@ async function loadAll(){
       if(!state.plan[day]) state.plan[day] = [];
       if(!state.diet[day]) state.diet[day] = Object.fromEntries(MEAL_SLOTS.map(s=>[s,[]]));
       MEAL_SLOTS.forEach(s=>{ if(!state.diet[day][s]) state.diet[day][s]=[]; });
+      if(!state.diet[day].integratori) state.diet[day].integratori = [];
     });
   }catch(e){
     console.error('Errore caricamento dati', e);
@@ -766,6 +768,22 @@ function renderDieta(){
       <div id="diet-slots"></div>
       <div class="day-total" id="diet-day-total"></div>
     </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
+        <span style="font-family:var(--font-display);font-size:16px;color:var(--steel);">Integratori — ${activeDietDay}</span>
+        <span class="autosave-tag" id="supp-autosave">salvato</span>
+      </div>
+      <div id="supp-list"></div>
+      <div class="add-item-row">
+        <div class="field"><input type="text" id="supp-name" placeholder="Nome (es. Creatina)" list="supp-suggestions"></div>
+        <div class="field" style="max-width:110px;"><input type="text" id="supp-dose" placeholder="dose (es. 5g)"></div>
+        <button class="btn btn-sm" id="supp-add" type="button" style="border-color:var(--steel);color:var(--steel);">+</button>
+      </div>
+      <datalist id="supp-suggestions">
+        <option value="Creatina"><option value="Proteine in polvere (whey)"><option value="Omega 3">
+        <option value="Vitamina D"><option value="Multivitaminico"><option value="Magnesio">
+      </datalist>
+    </div>
     <datalist id="food-db-list">
       ${Object.keys(FOOD_DB).map(k=>`<option value="${k.charAt(0).toUpperCase()+k.slice(1)}">`).join('')}
     </datalist>
@@ -798,6 +816,32 @@ function renderDieta(){
     </div>`;
   }).join('');
   document.getElementById('diet-day-total').textContent = `Totale giornaliero: ${dayTotal} kcal`;
+
+  const suppListEl = document.getElementById('supp-list');
+  const supplements = dayData.integratori || [];
+  suppListEl.innerHTML = supplements.length ? supplements.map((s,i)=>`
+    <div class="diet-item-row">
+      <span class="name">${escapeHTML(s.name)}</span>
+      <span class="detail">${escapeHTML(s.dose||'')}</span>
+      <button class="btn btn-ghost btn-sm" data-del-supp="${i}">✕</button>
+    </div>
+  `).join('') : `<p style="font-size:12px;color:var(--ink-faint);margin:4px 0 8px;">Nessun integratore registrato oggi.</p>`;
+  suppListEl.querySelectorAll('[data-del-supp]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      state.diet[activeDietDay].integratori.splice(+b.dataset.delSupp, 1);
+      saveDiet('supp-autosave'); renderDieta();
+    });
+  });
+  document.getElementById('supp-add').addEventListener('click', ()=>{
+    const nameInp = document.getElementById('supp-name');
+    const doseInp = document.getElementById('supp-dose');
+    const name = nameInp.value.trim();
+    const dose = doseInp.value.trim();
+    if(!name){ alert('Inserisci il nome dell\'integratore.'); return; }
+    if(!state.diet[activeDietDay].integratori) state.diet[activeDietDay].integratori = [];
+    state.diet[activeDietDay].integratori.push({name, dose});
+    saveDiet('supp-autosave'); renderDieta();
+  });
 
   slotsEl.querySelectorAll('[data-del-item]').forEach(b=>{
     b.addEventListener('click', ()=>{
