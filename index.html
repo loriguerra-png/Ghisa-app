@@ -141,6 +141,28 @@
     padding:8px 14px;cursor:pointer;white-space:nowrap;
   }
   .day-tabs button.active{background:var(--olive);color:#1C1B19;border-color:var(--olive);}
+  .heatmap-year{margin-bottom:22px;}
+  .heatmap-year-header{
+    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;
+    font-family:var(--font-display);font-size:15px;color:var(--ink);letter-spacing:0.3px;
+  }
+  .heatmap-count{font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);}
+  .heatmap-grid{display:flex;gap:3px;overflow-x:auto;padding-bottom:6px;}
+  .heatmap-col{display:flex;flex-direction:column;gap:3px;flex-shrink:0;}
+  .hm-cell{width:11px;height:11px;border-radius:2px;background:var(--surface-raised);border:1px solid var(--line);}
+  .hm-cell.hm-trained{background:var(--rust);border-color:var(--rust);}
+  .hm-cell.hm-trained.hm-multi{background:var(--ink);border-color:var(--ink);}
+  .hm-cell.hm-empty-space{background:transparent;border-color:transparent;}
+  .week-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .week-nav button{background:none;border:none;color:var(--ink-muted);cursor:pointer;font-family:var(--font-display);font-size:12px;text-transform:uppercase;letter-spacing:0.3px;padding:4px;}
+  .week-nav button:hover{color:var(--rust);}
+  .habit-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px;min-width:480px;}
+  .habit-table th{padding:6px 4px;color:var(--ink-muted);font-weight:500;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--line);}
+  .habit-table td{padding:7px 4px;text-align:center;border-bottom:1px solid var(--line);}
+  .habit-table td.habit-name{text-align:left;color:var(--ink);font-family:var(--font-body);font-size:13px;white-space:nowrap;}
+  .habit-check{width:18px;height:18px;accent-color:var(--rust);cursor:pointer;}
+  .habit-pct-row td{color:var(--olive);font-weight:700;}
+  .mindset-input{width:42px;text-align:center;padding:5px 2px;}
   .plan-row,.diet-item-row{
     display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);
     font-family:var(--font-mono);font-size:13px;
@@ -184,7 +206,11 @@
 <div id="app"><div class="loading">Caricamento diario…</div></div>
 
 <script>
-const STORAGE_KEYS = { workouts:'workouts', plan:'trainingPlan', diet:'dietPlan', progress:'progressEntries', photosIndex:'progressPhotosIndex' };
+const STORAGE_KEYS = { workouts:'workouts', plan:'trainingPlan', diet:'dietPlan', progress:'progressEntries', photosIndex:'progressPhotosIndex', dietDocument:'dietDocumentMeta', planDocument:'planDocumentMeta', habits:'habitsList', habitLogs:'habitLogs', mindsetLogs:'mindsetLogs' };
+const DOC_CONFIG = {
+  diet: { idbId:'diet-doc', metaKey:'dietDocument', title:'Documento dieta (nutrizionista)' },
+  plan: { idbId:'plan-doc', metaKey:'planDocument', title:'Documento scheda (personal trainer)' }
+};
 const DAYS = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 const MEAL_SLOTS = ['Colazione','Spuntino mattina','Pranzo','Spuntino pomeriggio','Cena'];
 
@@ -249,11 +275,22 @@ function getDailyQuote(){
   return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
 }
 
-let state = { workouts: [], plan: {}, diet: {}, progress: [], photos: [] };
+let state = { workouts: [], plan: {}, diet: {}, progress: [], photos: [], documents: { diet:null, plan:null }, habits: [], habitLogs: {}, mindsetLogs: {} };
 let photoDataCache = {};
 let activeTab = 'diario';
 let activePlanDay = DAYS[0];
 let activeDietDay = DAYS[0];
+let activeWeekStart = getMonday(new Date());
+
+function getMonday(d){
+  const date = new Date(d);
+  const day = (date.getDay()+6)%7; // 0=Mon
+  date.setDate(date.getDate()-day);
+  date.setHours(0,0,0,0);
+  return date;
+}
+function isoDate(d){ return d.toISOString().slice(0,10); }
+function addDays(d, n){ const r = new Date(d); r.setDate(r.getDate()+n); return r; }
 let showWorkoutForm = false;
 let workoutFormExercises = [];
 
@@ -303,6 +340,16 @@ async function loadAll(){
     const d = localStorage.getItem(STORAGE_KEYS.diet);
     const pr = localStorage.getItem(STORAGE_KEYS.progress);
     const ph = localStorage.getItem(STORAGE_KEYS.photosIndex);
+    const dd = localStorage.getItem(STORAGE_KEYS.dietDocument);
+    const pd = localStorage.getItem(STORAGE_KEYS.planDocument);
+    state.documents.diet = dd ? JSON.parse(dd) : null;
+    const hb = localStorage.getItem(STORAGE_KEYS.habits);
+    const hl = localStorage.getItem(STORAGE_KEYS.habitLogs);
+    const ml = localStorage.getItem(STORAGE_KEYS.mindsetLogs);
+    state.habits = hb ? JSON.parse(hb) : [];
+    state.habitLogs = hl ? JSON.parse(hl) : {};
+    state.mindsetLogs = ml ? JSON.parse(ml) : {};
+    state.documents.plan = pd ? JSON.parse(pd) : null;
     state.workouts = w ? JSON.parse(w) : [];
     if(p){ state.plan = JSON.parse(p); } else { state.plan = defaultPlan(); seedPlan = true; }
     if(d){ state.diet = JSON.parse(d); } else { state.diet = defaultDiet(); seedDiet = true; }
@@ -326,8 +373,12 @@ async function loadAll(){
 
 function idbOpen(){
   return new Promise((resolve, reject)=>{
-    const req = indexedDB.open('ghisaDB', 1);
-    req.onupgradeneeded = ()=>{ req.result.createObjectStore('photos', {keyPath:'id'}); };
+    const req = indexedDB.open('ghisaDB', 2);
+    req.onupgradeneeded = ()=>{
+      const db = req.result;
+      if(!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', {keyPath:'id'});
+      if(!db.objectStoreNames.contains('documents')) db.createObjectStore('documents', {keyPath:'id'});
+    };
     req.onsuccess = ()=>resolve(req.result);
     req.onerror = ()=>reject(req.error);
   });
@@ -355,6 +406,34 @@ async function idbDeletePhoto(id){
   return new Promise((resolve, reject)=>{
     const tx = db.transaction('photos','readwrite');
     tx.objectStore('photos').delete(id);
+    tx.oncomplete = ()=>resolve(true);
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+
+async function idbSetDocument(id, dataUrl){
+  const db = await idbOpen();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction('documents','readwrite');
+    tx.objectStore('documents').put({id, dataUrl});
+    tx.oncomplete = ()=>resolve(true);
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+async function idbGetDocument(id){
+  const db = await idbOpen();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction('documents','readonly');
+    const req = tx.objectStore('documents').get(id);
+    req.onsuccess = ()=>resolve(req.result ? req.result.dataUrl : null);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function idbDeleteDocument(id){
+  const db = await idbOpen();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction('documents','readwrite');
+    tx.objectStore('documents').delete(id);
     tx.oncomplete = ()=>resolve(true);
     tx.onerror = ()=>reject(tx.error);
   });
@@ -401,6 +480,89 @@ function savePlan(tagId){ saveKey(STORAGE_KEYS.plan, state.plan, tagId); }
 function saveDiet(tagId){ saveKey(STORAGE_KEYS.diet, state.diet, tagId); }
 function saveProgress(){ saveKey(STORAGE_KEYS.progress, state.progress); }
 function savePhotosIndex(){ saveKey(STORAGE_KEYS.photosIndex, state.photos); }
+function saveHabits(){ saveKey(STORAGE_KEYS.habits, state.habits); }
+function saveHabitLogs(tagId){ saveKey(STORAGE_KEYS.habitLogs, state.habitLogs, tagId); }
+function saveMindsetLogs(tagId){ saveKey(STORAGE_KEYS.mindsetLogs, state.mindsetLogs, tagId); }
+
+function readDocumentFile(file){
+  if(file.type.startsWith('image/')) return resizeImageToDataURL(file, 1600);
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=>reject(new Error('Lettura file fallita'));
+    reader.onload = ()=>resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadDocument(kind, file){
+  try{
+    const dataUrl = await readDocumentFile(file);
+    await idbSetDocument(DOC_CONFIG[kind].idbId, dataUrl);
+    state.documents[kind] = { filename:file.name, uploadedAt:new Date().toISOString().slice(0,10), mimeType:file.type||'application/octet-stream' };
+    saveKey(STORAGE_KEYS[DOC_CONFIG[kind].metaKey], state.documents[kind]);
+    if(kind==='diet') renderDieta(); else renderScheda();
+  }catch(e){
+    console.error('Errore caricamento documento', e);
+    alert('Non sono riuscito a caricare questo file.');
+  }
+}
+
+async function deleteDocument(kind){
+  try{ await idbDeleteDocument(DOC_CONFIG[kind].idbId); }catch(e){ console.error(e); }
+  state.documents[kind] = null;
+  saveKey(STORAGE_KEYS[DOC_CONFIG[kind].metaKey], null);
+  if(kind==='diet') renderDieta(); else renderScheda();
+}
+
+function bindDocumentUpload(kind){
+  const btn = document.getElementById(kind+'-doc-upload');
+  if(btn) btn.addEventListener('click', ()=>{
+    const fileInp = document.getElementById(kind+'-doc-file');
+    if(!fileInp.files || fileInp.files.length===0){ alert('Seleziona prima un file.'); return; }
+    uploadDocument(kind, fileInp.files[0]);
+  });
+}
+
+async function renderDocumentCard(kind){
+  const el = document.getElementById(kind+'-doc-section');
+  if(!el) return;
+  const meta = state.documents[kind];
+  const cfg = DOC_CONFIG[kind];
+  if(!meta){
+    el.innerHTML = `
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:16px;margin-bottom:8px;">${cfg.title}</div>
+        <p style="font-size:12px;color:var(--ink-muted);margin:0 0 10px;">Nessun documento caricato. Carica il PDF o la foto che ti ha dato.</p>
+        <div class="field"><input type="file" id="${kind}-doc-file" accept="application/pdf,image/*"></div>
+        <div class="card-actions" style="justify-content:flex-start;"><button class="btn btn-olive btn-sm" id="${kind}-doc-upload">Carica documento</button></div>
+      </div>`;
+    bindDocumentUpload(kind);
+    return;
+  }
+  el.innerHTML = `<div class="card"><p style="font-size:11px;color:var(--ink-faint);font-family:var(--font-mono);">Caricamento…</p></div>`;
+  let dataUrl = null;
+  try{ dataUrl = await idbGetDocument(cfg.idbId); }catch(e){ console.error(e); }
+  const isImage = meta.mimeType.startsWith('image/');
+  el.innerHTML = `
+    <div class="card">
+      <div style="font-family:var(--font-display);font-size:16px;margin-bottom:10px;">${cfg.title}</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        ${isImage ? `<img src="${dataUrl||''}" style="width:64px;height:64px;object-fit:cover;border:1px solid var(--line);">` : `<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);">PDF</div>`}
+        <div style="flex:1;font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);">${escapeHTML(meta.filename)}<br>caricato il ${formatDateShort(meta.uploadedAt)}</div>
+      </div>
+      <div class="card-actions" style="justify-content:flex-start;gap:8px;">
+        <a class="btn btn-sm" href="${dataUrl||'#'}" target="_blank" rel="noopener">Apri</a>
+        <label class="btn btn-sm" style="cursor:pointer;">Sostituisci<input type="file" id="${kind}-doc-file-replace" accept="application/pdf,image/*" style="display:none;"></label>
+        <button class="btn btn-ghost btn-sm" id="${kind}-doc-delete">Elimina</button>
+      </div>
+    </div>`;
+  document.getElementById(kind+'-doc-delete').addEventListener('click', ()=>{
+    if(confirm('Eliminare il documento caricato?')) deleteDocument(kind);
+  });
+  document.getElementById(kind+'-doc-file-replace').addEventListener('change', e=>{
+    if(e.target.files[0]) uploadDocument(kind, e.target.files[0]);
+  });
+}
 
 function resizeImageToDataURL(file, maxWidth){
   return new Promise((resolve, reject)=>{
@@ -498,17 +660,20 @@ function render(){
       <button data-tab="diario" class="${activeTab==='diario'?'active':''}">Diario</button>
       <button data-tab="scheda" class="${activeTab==='scheda'?'active':''}">Scheda</button>
       <button data-tab="dieta" class="${activeTab==='dieta'?'active':''}">Dieta</button>
+      <button data-tab="abitudini" class="${activeTab==='abitudini'?'active':''}">Abitudini</button>
       <button data-tab="progressi" class="${activeTab==='progressi'?'active':''}">Progressi</button>
     </nav>
     <div id="panel-diario" class="panel ${activeTab==='diario'?'active':''}"></div>
     <div id="panel-scheda" class="panel ${activeTab==='scheda'?'active':''}"></div>
     <div id="panel-dieta" class="panel ${activeTab==='dieta'?'active':''}"></div>
+    <div id="panel-abitudini" class="panel ${activeTab==='abitudini'?'active':''}"></div>
     <div id="panel-progressi" class="panel ${activeTab==='progressi'?'active':''}"></div>
   `;
   app.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
   renderDiario();
   renderScheda();
   renderDieta();
+  renderAbitudini();
   renderProgressi();
 }
 
@@ -523,6 +688,58 @@ function exerciseMaxWeight(name){
   return max;
 }
 
+function renderWorkoutHeatmap(){
+  const container = document.getElementById('workout-heatmap');
+  if(!container) return;
+  if(state.workouts.length===0){ container.innerHTML=''; return; }
+
+  const workoutDates = {};
+  state.workouts.forEach(w=>{ workoutDates[w.date] = (workoutDates[w.date]||0) + 1; });
+
+  const years = [...new Set(state.workouts.map(w=>+w.date.slice(0,4)))].sort((a,b)=>b-a);
+  const currentYear = new Date().getFullYear();
+  if(!years.includes(currentYear)) years.unshift(currentYear);
+
+  const html = years.map(year=>{
+    const start = new Date(year,0,1);
+    const end = year===currentYear ? new Date() : new Date(year,11,31);
+    const leadDays = (start.getDay()+6)%7; // Monday-first offset
+    const gridStart = new Date(start);
+    gridStart.setDate(start.getDate()-leadDays);
+
+    const weeks = [];
+    let cur = new Date(gridStart);
+    let week = [];
+    while(cur <= end || week.length>0){
+      week.push(new Date(cur));
+      if(week.length===7){ weeks.push(week); week=[]; }
+      cur.setDate(cur.getDate()+1);
+      if(cur > end && week.length===0) break;
+    }
+    if(week.length){ while(week.length<7) week.push(null); weeks.push(week); }
+
+    const count = state.workouts.filter(w=>w.date.slice(0,4)===''+year).length;
+
+    const colsHTML = weeks.map(wk=>`<div class="heatmap-col">${wk.map(d=>{
+      if(!d) return `<div class="hm-cell hm-empty-space"></div>`;
+      const inRange = d>=start && d<=end;
+      if(!inRange) return `<div class="hm-cell hm-empty-space"></div>`;
+      const iso = d.toISOString().slice(0,10);
+      const n = workoutDates[iso]||0;
+      const cls = n>1 ? 'hm-cell hm-trained hm-multi' : n===1 ? 'hm-cell hm-trained' : 'hm-cell';
+      return `<div class="${cls}" title="${iso}${n?` — ${n} allenamento${n>1?'i':''}`:''}"></div>`;
+    }).join('')}</div>`).join('');
+
+    return `
+      <div class="heatmap-year">
+        <div class="heatmap-year-header"><span>${year}</span><span class="heatmap-count">${count} allenament${count===1?'o':'i'}</span></div>
+        <div class="heatmap-grid">${colsHTML}</div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `<h2 class="section-title" style="font-size:16px;margin-bottom:10px;">Cronologia</h2>${html}`;
+}
+
 function renderDiario(){
   const el = document.getElementById('panel-diario');
   const sorted = [...state.workouts].sort((a,b)=> b.date.localeCompare(a.date));
@@ -532,9 +749,11 @@ function renderDiario(){
     <div style="margin-bottom:16px;">
       <button class="btn btn-primary" id="toggle-workout-form">${showWorkoutForm? 'Annulla' : '+ Nuovo allenamento'}</button>
     </div>
+    <div id="workout-heatmap"></div>
     <div id="workout-form-wrap"></div>
     <div id="workout-list"></div>
   `;
+  renderWorkoutHeatmap();
   document.getElementById('toggle-workout-form').addEventListener('click', ()=>{
     showWorkoutForm = !showWorkoutForm;
     if(showWorkoutForm) workoutFormExercises = [{id:uid(), name:'', sets:[{reps:'',weight:''}]}];
@@ -706,6 +925,7 @@ function renderScheda(){
   el.innerHTML = `
     <h2 class="section-title">Scheda di allenamento</h2>
     <p class="section-hint">La tua tabella settimanale: esercizi, serie, ripetizioni e peso target per ogni giorno.</p>
+    <div id="plan-doc-section" style="margin-bottom:16px;"></div>
     <div class="day-tabs">
       ${DAYS.map(d=>`<button data-day="${d}" class="${activePlanDay===d?'active':''}">${d.slice(0,3)}</button>`).join('')}
     </div>
@@ -749,6 +969,7 @@ function renderScheda(){
     state.plan[activePlanDay].push({name, sets, reps, weight});
     savePlan('plan-autosave'); renderScheda();
   });
+  renderDocumentCard('plan');
 }
 
 /* ---------- DIETA ---------- */
@@ -757,6 +978,7 @@ function renderDieta(){
   el.innerHTML = `
     <h2 class="section-title">Piano alimentare</h2>
     <p class="section-hint">Organizza i pasti per ogni giorno della settimana, con alimenti, quantità e calorie.</p>
+    <div id="diet-doc-section" style="margin-bottom:16px;"></div>
     <div class="day-tabs">
       ${DAYS.map(d=>`<button data-day="${d}" class="${activeDietDay===d?'active':''}">${d.slice(0,3)}</button>`).join('')}
     </div>
@@ -879,9 +1101,151 @@ function renderDieta(){
       saveDiet('diet-autosave'); renderDieta();
     });
   });
+  renderDocumentCard('diet');
 }
 
 /* ---------- PROGRESSI ---------- */
+/* ---------- ABITUDINI ---------- */
+function renderAbitudini(){
+  const el = document.getElementById('panel-abitudini');
+  const weekDays = [0,1,2,3,4,5,6].map(i=>addDays(activeWeekStart,i));
+  const weekLabel = `${weekDays[0].toLocaleDateString('it-IT',{day:'2-digit',month:'short'})} – ${weekDays[6].toLocaleDateString('it-IT',{day:'2-digit',month:'short'})}`;
+  const isCurrentWeek = isoDate(getMonday(new Date())) === isoDate(activeWeekStart);
+
+  el.innerHTML = `
+    <h2 class="section-title">Abitudini</h2>
+    <p class="section-hint">Traccia le tue abitudini settimana per settimana, con un check-in veloce su energia, focus e motivazione.</p>
+    <div class="week-nav">
+      <button id="week-prev">‹ Settimana precedente</button>
+      <span style="color:var(--ink);font-family:var(--font-mono);">${weekLabel}${isCurrentWeek? ' (corrente)':''}</span>
+      <button id="week-next">Settimana successiva ›</button>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="habit-table" id="habit-table"></table>
+      <div class="row" style="margin-top:14px;">
+        <div class="field"><input type="text" id="habit-new-name" placeholder="Nuova abitudine (es. Bere 2L acqua)"></div>
+        <button class="btn btn-olive btn-sm" id="habit-add" style="flex-shrink:0;">+ Aggiungi</button>
+      </div>
+    </div>
+    <h2 class="section-title" style="margin-top:26px;font-size:16px;">Mindset check-in</h2>
+    <p class="section-hint">Un numero da 1 a 10 per ogni giorno.</p>
+    <div class="card" style="overflow-x:auto;">
+      <table class="habit-table" id="mindset-table"></table>
+    </div>
+    <h2 class="section-title" style="margin-top:26px;font-size:16px;">Andamento</h2>
+    <div class="chart-wrap"><div id="habits-chart" style="width:100%;height:100%;"></div></div>
+  `;
+
+  document.getElementById('week-prev').addEventListener('click', ()=>{ activeWeekStart = addDays(activeWeekStart,-7); renderAbitudini(); });
+  document.getElementById('week-next').addEventListener('click', ()=>{ activeWeekStart = addDays(activeWeekStart,7); renderAbitudini(); });
+
+  // Habit grid
+  const dayShort = weekDays.map(d=>d.toLocaleDateString('it-IT',{weekday:'short'}));
+  const habitTable = document.getElementById('habit-table');
+  const pctByDay = weekDays.map(d=>{
+    const iso = isoDate(d);
+    const log = state.habitLogs[iso] || {};
+    if(state.habits.length===0) return 0;
+    const done = state.habits.filter(h=>log[h]).length;
+    return Math.round((done/state.habits.length)*100);
+  });
+  habitTable.innerHTML = `
+    <tr><th style="text-align:left;">Abitudine</th>${dayShort.map(d=>`<th>${d}</th>`).join('')}<th></th></tr>
+    ${state.habits.length===0 ? `<tr><td colspan="${9}" style="padding:14px 0;color:var(--ink-muted);font-family:var(--font-body);text-align:left;">Nessuna abitudine ancora — aggiungine una qui sotto.</td></tr>` :
+      state.habits.map((h,hi)=>`
+      <tr>
+        <td class="habit-name">${escapeHTML(h)}</td>
+        ${weekDays.map(d=>{
+          const iso = isoDate(d);
+          const checked = !!(state.habitLogs[iso] && state.habitLogs[iso][h]);
+          return `<td><input type="checkbox" class="habit-check" data-date="${iso}" data-habit="${hi}" ${checked?'checked':''}></td>`;
+        }).join('')}
+        <td><button class="btn btn-ghost btn-sm" data-del-habit="${hi}">✕</button></td>
+      </tr>`).join('')}
+    ${state.habits.length? `<tr class="habit-pct-row"><td class="habit-name">% giorno</td>${pctByDay.map(p=>`<td>${p}%</td>`).join('')}<td></td></tr>`:''}
+  `;
+  habitTable.querySelectorAll('.habit-check').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const iso = cb.dataset.date;
+      const habit = state.habits[+cb.dataset.habit];
+      if(!state.habitLogs[iso]) state.habitLogs[iso] = {};
+      if(cb.checked) state.habitLogs[iso][habit] = true; else delete state.habitLogs[iso][habit];
+      saveHabitLogs();
+      renderAbitudini();
+    });
+  });
+  habitTable.querySelectorAll('[data-del-habit]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const habit = state.habits[+b.dataset.delHabit];
+      if(!confirm(`Rimuovere l'abitudine "${habit}"?`)) return;
+      state.habits.splice(+b.dataset.delHabit,1);
+      saveHabits(); renderAbitudini();
+    });
+  });
+  document.getElementById('habit-add').addEventListener('click', ()=>{
+    const inp = document.getElementById('habit-new-name');
+    const name = inp.value.trim();
+    if(!name){ alert('Dai un nome all\'abitudine.'); return; }
+    if(state.habits.includes(name)){ alert('Questa abitudine esiste già.'); return; }
+    state.habits.push(name);
+    saveHabits(); renderAbitudini();
+  });
+
+  // Mindset table
+  const mindsetRows = [ ['energia','Energia'], ['focus','Focus'], ['motivazione','Motivazione'] ];
+  const mindsetTable = document.getElementById('mindset-table');
+  mindsetTable.innerHTML = `
+    <tr><th style="text-align:left;">Check-in</th>${dayShort.map(d=>`<th>${d}</th>`).join('')}</tr>
+    ${mindsetRows.map(([key,label])=>`
+      <tr>
+        <td class="habit-name">${label}</td>
+        ${weekDays.map(d=>{
+          const iso = isoDate(d);
+          const val = (state.mindsetLogs[iso] && state.mindsetLogs[iso][key]) || '';
+          return `<td><input type="number" min="1" max="10" class="mindset-input" data-date="${iso}" data-key="${key}" value="${val}"></td>`;
+        }).join('')}
+      </tr>`).join('')}
+  `;
+  mindsetTable.querySelectorAll('.mindset-input').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const iso = inp.dataset.date, key = inp.dataset.key;
+      const val = inp.value===''? null : Math.max(1,Math.min(10,+inp.value));
+      if(!state.mindsetLogs[iso]) state.mindsetLogs[iso] = {};
+      if(val===null) delete state.mindsetLogs[iso][key]; else state.mindsetLogs[iso][key] = val;
+      saveMindsetLogs();
+    });
+  });
+
+  renderHabitsChart();
+}
+
+function renderHabitsChart(){
+  const el = document.getElementById('habits-chart');
+  if(!el) return;
+  // Last 8 weeks completion % + average mindset score
+  const weeks = [];
+  for(let i=7;i>=0;i--){
+    const wStart = addDays(getMonday(new Date()), -7*i);
+    const days = [0,1,2,3,4,5,6].map(n=>addDays(wStart,n));
+    let totalPossible=0, totalDone=0, mindsetSum=0, mindsetCount=0;
+    days.forEach(d=>{
+      const iso = isoDate(d);
+      if(state.habits.length){ totalPossible += state.habits.length; totalDone += state.habits.filter(h=>state.habitLogs[iso]&&state.habitLogs[iso][h]).length; }
+      const m = state.mindsetLogs[iso];
+      if(m){ ['energia','focus','motivazione'].forEach(k=>{ if(m[k]){ mindsetSum+=m[k]; mindsetCount++; } }); }
+    });
+    const pct = totalPossible? Math.round((totalDone/totalPossible)*100) : 0;
+    const mindsetAvg = mindsetCount? +(mindsetSum/mindsetCount).toFixed(1) : null;
+    weeks.push({ label: wStart.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}), pct, mindsetAvg });
+  }
+  const hasData = weeks.some(w=>w.pct>0) || weeks.some(w=>w.mindsetAvg!==null);
+  if(!hasData){
+    el.parentElement.innerHTML = `<div class="empty-state" style="height:100%;display:flex;align-items:center;justify-content:center;">Nessun dato ancora — inizia a segnare abitudini o check-in.</div>`;
+    return;
+  }
+  el.parentElement.innerHTML = svgLineChart(weeks.map(w=>({label:w.label,value:w.pct})), '#C1421A', '% Abitudini completate (per settimana)');
+}
+
 function renderProgressi(){
   const el = document.getElementById('panel-progressi');
   const sorted = [...state.progress].sort((a,b)=>a.date.localeCompare(b.date));
@@ -913,8 +1277,14 @@ function renderProgressi(){
         <div class="field"><label class="field-label">Fianchi (cm)</label><input type="number" id="pf-hips" step="0.5"></div>
       </div>
       <div class="row">
-        <div class="field"><label class="field-label">Braccio (cm)</label><input type="number" id="pf-arm" step="0.5"></div>
-        <div class="field"><label class="field-label">Coscia (cm)</label><input type="number" id="pf-thigh" step="0.5"></div>
+        <div class="field"><label class="field-label">Braccio DX (cm)</label><input type="number" id="pf-arm-dx" step="0.5"></div>
+        <div class="field"><label class="field-label">Braccio SX (cm)</label><input type="number" id="pf-arm-sx" step="0.5"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label class="field-label">Coscia DX (cm)</label><input type="number" id="pf-thigh-dx" step="0.5"></div>
+        <div class="field"><label class="field-label">Coscia SX (cm)</label><input type="number" id="pf-thigh-sx" step="0.5"></div>
+      </div>
+      <div class="row">
         <div class="field"><label class="field-label">Note</label><input type="text" id="pf-notes" placeholder="opzionale"></div>
       </div>
       <div class="card-actions">
@@ -951,8 +1321,10 @@ function renderProgressi(){
         petto: +document.getElementById('pf-chest').value || null,
         vita: +document.getElementById('pf-waist').value || null,
         fianchi: +document.getElementById('pf-hips').value || null,
-        braccio: +document.getElementById('pf-arm').value || null,
-        coscia: +document.getElementById('pf-thigh').value || null,
+        braccioDx: +document.getElementById('pf-arm-dx').value || null,
+        braccioSx: +document.getElementById('pf-arm-sx').value || null,
+        cosciaDx: +document.getElementById('pf-thigh-dx').value || null,
+        cosciaSx: +document.getElementById('pf-thigh-sx').value || null,
       },
       notes: document.getElementById('pf-notes').value
     };
@@ -969,8 +1341,10 @@ function renderProgressi(){
     if(m.petto) parts.push(`petto ${m.petto}`);
     if(m.vita) parts.push(`vita ${m.vita}`);
     if(m.fianchi) parts.push(`fianchi ${m.fianchi}`);
-    if(m.braccio) parts.push(`braccio ${m.braccio}`);
-    if(m.coscia) parts.push(`coscia ${m.coscia}`);
+    if(m.braccioDx || m.braccioSx) parts.push(`braccio DX ${m.braccioDx??'—'} / SX ${m.braccioSx??'—'}`);
+    else if(m.braccio) parts.push(`braccio ${m.braccio}`);
+    if(m.cosciaDx || m.cosciaSx) parts.push(`coscia DX ${m.cosciaDx??'—'} / SX ${m.cosciaSx??'—'}`);
+    else if(m.coscia) parts.push(`coscia ${m.coscia}`);
     return `<div class="measure-entry">
       <span class="m-date">${formatDateShort(e.date)}</span>
       <span class="m-val">${e.weight} kg</span>
