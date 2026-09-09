@@ -219,6 +219,15 @@ const DOC_CONFIG = {
 const DAYS = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 const MEAL_SLOTS = ['Colazione','Spuntino mattina','Pranzo','Spuntino pomeriggio','Cena'];
 
+const MUSCLE_GROUPS = {
+  'Petto': ['Panca piana', 'Panca inclinata manubri', 'Chest press (macchina)', 'Croci con manubri', 'Dip su panca', 'Push-up'],
+  'Spalle': ['Shoulder press manubri', 'Alzate laterali', 'Alzate frontali', 'Military press', 'Alzate posteriori (rear delt)'],
+  'Bicipiti': ['Curl bicipiti manubri', 'Curl con bilanciere', 'Hammer curl', 'Curl ai cavi', 'Curl su panca Scott'],
+  'Tricipiti': ['Push-down tricipiti ai cavi', 'French press', 'Dip su macchina', 'Kickback tricipiti', 'Estensioni sopra la testa'],
+  'Addome': ['Plank', 'Crunch ai cavi', 'Russian twist', 'Mountain climbers', 'Sit-up', 'Leg raise'],
+  'Gambe': ['Squat', 'Leg press', 'Leg curl', 'Leg extension', 'Affondi con manubri', 'Stacco rumeno', 'Polpacci in piedi', 'Hip thrust', 'Affondi bulgari']
+};
+
 const FOOD_DB = {
   'petto di pollo':165, 'petto di tacchino':135, 'manzo magro':250, 'salmone':208,
   'tonno al naturale':116, 'uova intere':155, 'albume d\'uovo':52, 'yogurt greco':59,
@@ -830,7 +839,7 @@ function renderDiario(){
   renderWorkoutHeatmap();
   document.getElementById('toggle-workout-form').addEventListener('click', ()=>{
     showWorkoutForm = !showWorkoutForm;
-    if(showWorkoutForm) workoutFormExercises = [{id:uid(), name:'', sets:[{reps:'',weight:''}]}];
+    if(showWorkoutForm) workoutFormExercises = [{id:uid(), name:'', muscleGroup:'', sets:[{count:1,reps:'',weight:''}]}];
     renderDiario();
   });
 
@@ -911,18 +920,31 @@ function workoutFormHTML(){
 }
 
 function exerciseFormBlockHTML(ex){
+  const groupOptions = Object.keys(MUSCLE_GROUPS).map(g=>`<option value="${g}" ${ex.muscleGroup===g?'selected':''}>${g}</option>`).join('');
+  const exerciseOptions = (MUSCLE_GROUPS[ex.muscleGroup]||[]).map(name=>`<option value="${name}" ${ex.name===name?'selected':''}>${name}</option>`).join('');
   return `
   <div class="exercise-form-block" data-ex-id="${ex.id}">
     <div class="row" style="margin-bottom:8px;">
-      <div class="field"><input type="text" class="ex-name-input" data-ex="${ex.id}" placeholder="Nome esercizio (es. Panca piana)" value="${escapeAttr(ex.name)}"></div>
+      <div class="field"><select class="ex-muscle-select" data-ex="${ex.id}">
+        <option value="">Gruppo muscolare</option>
+        ${groupOptions}
+      </select></div>
+      <div class="field"><select class="ex-exercise-select" data-ex="${ex.id}" ${!ex.muscleGroup?'disabled':''}>
+        <option value="">${ex.muscleGroup? 'Scegli esercizio suggerito' : 'Scegli prima il gruppo'}</option>
+        ${exerciseOptions}
+      </select></div>
+    </div>
+    <div class="row" style="margin-bottom:8px;">
+      <div class="field"><input type="text" class="ex-name-input" data-ex="${ex.id}" placeholder="Nome esercizio (es. Panca piana), o scegli sopra" value="${escapeAttr(ex.name)}"></div>
       <button class="btn btn-ghost btn-sm" data-remove-ex="${ex.id}" type="button">✕</button>
     </div>
     <div class="sets-list" data-sets-for="${ex.id}">
       ${ex.sets.map((s,i)=>`
         <div class="add-set-row">
           <span class="set-idx" style="font-family:var(--font-mono);color:var(--ink-faint);width:16px;">${i+1}</span>
-          <div class="field" style="max-width:90px;"><input type="number" class="set-reps-input" data-ex="${ex.id}" data-idx="${i}" placeholder="reps" value="${s.reps}"></div>
-          <div class="field" style="max-width:90px;"><input type="number" class="set-weight-input" data-ex="${ex.id}" data-idx="${i}" placeholder="kg" value="${s.weight}" step="0.5"></div>
+          <div class="field" style="max-width:70px;"><input type="number" class="set-count-input" data-ex="${ex.id}" data-idx="${i}" placeholder="serie" min="1" value="${s.count||1}"></div>
+          <div class="field" style="max-width:80px;"><input type="number" class="set-reps-input" data-ex="${ex.id}" data-idx="${i}" placeholder="reps" value="${s.reps}"></div>
+          <div class="field" style="max-width:80px;"><input type="number" class="set-weight-input" data-ex="${ex.id}" data-idx="${i}" placeholder="kg" value="${s.weight}" step="0.5"></div>
           <button class="btn btn-ghost btn-sm" data-remove-set="${ex.id}:${i}" type="button">✕</button>
         </div>
       `).join('')}
@@ -933,10 +955,28 @@ function exerciseFormBlockHTML(ex){
 
 function bindWorkoutForm(){
   const wrap = document.getElementById('workout-form-wrap');
+  wrap.querySelectorAll('.ex-muscle-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      const ex = workoutFormExercises.find(e=>e.id===sel.dataset.ex);
+      if(ex){ ex.muscleGroup = sel.value; renderDiario(); }
+    });
+  });
+  wrap.querySelectorAll('.ex-exercise-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      const ex = workoutFormExercises.find(e=>e.id===sel.dataset.ex);
+      if(ex && sel.value){ ex.name = sel.value; renderDiario(); }
+    });
+  });
   wrap.querySelectorAll('.ex-name-input').forEach(inp=>{
     inp.addEventListener('input', ()=>{
       const ex = workoutFormExercises.find(e=>e.id===inp.dataset.ex);
       if(ex) ex.name = inp.value;
+    });
+  });
+  wrap.querySelectorAll('.set-count-input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const ex = workoutFormExercises.find(e=>e.id===inp.dataset.ex);
+      if(ex) ex.sets[+inp.dataset.idx].count = inp.value;
     });
   });
   wrap.querySelectorAll('.set-reps-input').forEach(inp=>{
@@ -954,7 +994,7 @@ function bindWorkoutForm(){
   wrap.querySelectorAll('[data-add-set]').forEach(b=>{
     b.addEventListener('click', ()=>{
       const ex = workoutFormExercises.find(e=>e.id===b.dataset.addSet);
-      if(ex){ ex.sets.push({reps:'',weight:''}); renderDiario(); }
+      if(ex){ ex.sets.push({count:1,reps:'',weight:''}); renderDiario(); }
     });
   });
   wrap.querySelectorAll('[data-remove-set]').forEach(b=>{
@@ -967,13 +1007,13 @@ function bindWorkoutForm(){
   wrap.querySelectorAll('[data-remove-ex]').forEach(b=>{
     b.addEventListener('click', ()=>{
       workoutFormExercises = workoutFormExercises.filter(e=>e.id!==b.dataset.removeEx);
-      if(workoutFormExercises.length===0) workoutFormExercises.push({id:uid(),name:'',sets:[{reps:'',weight:''}]});
+      if(workoutFormExercises.length===0) workoutFormExercises.push({id:uid(),name:'',muscleGroup:'',sets:[{count:1,reps:'',weight:''}]});
       renderDiario();
     });
   });
   const addExBtn = document.getElementById('wf-add-exercise');
   if(addExBtn) addExBtn.addEventListener('click', ()=>{
-    workoutFormExercises.push({id:uid(), name:'', sets:[{reps:'',weight:''}]});
+    workoutFormExercises.push({id:uid(), name:'', muscleGroup:'', sets:[{count:1,reps:'',weight:''}]});
     renderDiario();
   });
   const saveBtn = document.getElementById('wf-save');
@@ -984,7 +1024,15 @@ function bindWorkoutForm(){
     const notes = document.getElementById('wf-notes').value;
     const exercises = workoutFormExercises
       .filter(e=>e.name.trim())
-      .map(e=>({ name:e.name.trim(), sets: e.sets.filter(s=>s.reps!=='' || s.weight!=='').map(s=>({reps:+s.reps||0, weight:+s.weight||0})) }));
+      .map(e=>({
+        name:e.name.trim(),
+        sets: e.sets
+          .filter(s=>s.reps!=='' || s.weight!=='')
+          .flatMap(s=>{
+            const n = Math.max(1, +s.count||1);
+            return Array.from({length:n}, ()=>({reps:+s.reps||0, weight:+s.weight||0}));
+          })
+      }));
     if(exercises.length===0){ alert('Aggiungi almeno un esercizio con nome.'); return; }
     state.workouts.push({ id:uid(), date, duration:+duration||0, calories:+calories||0, notes, exercises });
     saveWorkouts();
@@ -1010,6 +1058,7 @@ function renderScheda(){
         <span style="font-family:var(--font-display);font-size:16px;">${escapeHTML(activePlanDay)}</span>
         <div style="display:flex;align-items:center;gap:10px;">
           <span class="autosave-tag" id="plan-autosave">salvato</span>
+          <button class="btn btn-ghost btn-sm" id="plan-rename-day">Rinomina</button>
           <button class="btn btn-ghost btn-sm" id="plan-del-day">Elimina giorno</button>
         </div>
       </div>
@@ -1025,12 +1074,26 @@ function renderScheda(){
   `;
   el.querySelectorAll('.day-tabs button[data-day]').forEach(b=>b.addEventListener('click',()=>{ activePlanDay=b.dataset.day; renderScheda(); }));
   document.getElementById('plan-add-day').addEventListener('click', ()=>{
-    let n = state.planDays.length+1;
+    let n = 1;
     let label = 'Giorno '+n;
     while(state.planDays.includes(label)){ n++; label = 'Giorno '+n; }
     state.planDays.push(label);
     state.plan[label] = [];
     activePlanDay = label;
+    savePlanDays(); savePlan();
+    renderScheda();
+  });
+  document.getElementById('plan-rename-day').addEventListener('click', ()=>{
+    const current = activePlanDay;
+    const newName = prompt('Nuovo nome per questo giorno:', current);
+    if(!newName || !newName.trim() || newName.trim()===current) return;
+    const trimmed = newName.trim();
+    if(state.planDays.includes(trimmed)){ alert('Esiste già un giorno con questo nome.'); return; }
+    const idx = state.planDays.indexOf(current);
+    state.planDays[idx] = trimmed;
+    state.plan[trimmed] = state.plan[current];
+    delete state.plan[current];
+    activePlanDay = trimmed;
     savePlanDays(); savePlan();
     renderScheda();
   });
@@ -1344,6 +1407,80 @@ function renderHabitsChart(){
   el.parentElement.innerHTML = svgLineChart(weeks.map(w=>({label:w.label,value:w.pct})), '#A6192E', '% Abitudini completate (per settimana)');
 }
 
+function idbGetAll(storeName){
+  return idbOpen().then(db=>new Promise((resolve,reject)=>{
+    const tx = db.transaction(storeName,'readonly');
+    const req = tx.objectStore(storeName).getAll();
+    req.onsuccess = ()=>resolve(req.result||[]);
+    req.onerror = ()=>reject(req.error);
+  }));
+}
+function idbPutAll(storeName, items){
+  return idbOpen().then(db=>new Promise((resolve,reject)=>{
+    const tx = db.transaction(storeName,'readwrite');
+    items.forEach(it=>tx.objectStore(storeName).put(it));
+    tx.oncomplete = ()=>resolve(true);
+    tx.onerror = ()=>reject(tx.error);
+  }));
+}
+
+async function exportBackup(){
+  try{
+    const data = { exportedAt: new Date().toISOString(), localStorage:{}, photos:[], documents:[] };
+    Object.values(STORAGE_KEYS).forEach(key=>{
+      const v = localStorage.getItem(key);
+      if(v!==null) data.localStorage[key] = v;
+    });
+    data.photos = await idbGetAll('photos');
+    data.documents = await idbGetAll('documents');
+    const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = `ghisa-backup-${stamp}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }catch(e){
+    console.error('Errore esportazione backup', e);
+    alert('Non sono riuscito a creare il file di backup.');
+  }
+}
+
+async function importBackup(file){
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if(!data.localStorage){ alert('Questo file non sembra un backup valido di GHISA.'); return; }
+    if(!confirm('Importare questo backup? Sostituirà tutti i dati attuali nell\'app.')) return;
+    Object.entries(data.localStorage).forEach(([key,val])=>{ localStorage.setItem(key, val); });
+    if(data.photos && data.photos.length) await idbPutAll('photos', data.photos);
+    if(data.documents && data.documents.length) await idbPutAll('documents', data.documents);
+    photoDataCache = {};
+    alert('Backup importato correttamente. Ricarico l\'app...');
+    location.reload();
+  }catch(e){
+    console.error('Errore importazione backup', e);
+    alert('Non sono riuscito a leggere questo file di backup.');
+  }
+}
+
+function renderBackupSection(){
+  const el = document.getElementById('backup-section');
+  if(!el) return;
+  el.innerHTML = `
+    <h2 class="section-title" style="margin-top:28px;font-size:16px;">Backup dati</h2>
+    <p class="section-hint">I tuoi dati vivono solo su questo dispositivo. Esporta un file di backup ogni tanto — soprattutto prima di eliminare l'icona dell'app dalla home, che su iPhone può azzerare i dati salvati.</p>
+    <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-primary btn-sm" id="backup-export">Esporta backup (.json)</button>
+      <label class="btn btn-sm" style="cursor:pointer;">Importa backup<input type="file" id="backup-import-file" accept="application/json" style="display:none;"></label>
+    </div>
+  `;
+  document.getElementById('backup-export').addEventListener('click', exportBackup);
+  document.getElementById('backup-import-file').addEventListener('change', e=>{
+    if(e.target.files[0]) importBackup(e.target.files[0]);
+  });
+}
+
 function renderProgressi(){
   const el = document.getElementById('panel-progressi');
   const sorted = [...state.progress].sort((a,b)=>a.date.localeCompare(b.date));
@@ -1406,6 +1543,7 @@ function renderProgressi(){
     <div id="photo-gallery" style="margin-bottom:24px;"></div>
     <h2 class="section-title" style="margin-top:28px;">Storico</h2>
     <div id="progress-history"></div>
+    <div id="backup-section"></div>
   `;
 
   document.getElementById('pf-save').addEventListener('click', ()=>{
@@ -1468,6 +1606,7 @@ function renderProgressi(){
   refreshPhotoGallery();
 
   renderCharts(sorted);
+  renderBackupSection();
 }
 
 function svgLineChart(data, color, title){
