@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>GHISA — Diario di Allenamento</title>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#1C1B19">
+<meta name="theme-color" content="#FFFFFF">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GHISA">
@@ -16,21 +16,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#1C1B19;
-    --surface:#252320;
-    --surface-raised:#302D27;
-    --ink:#ECE7DD;
-    --ink-muted:#948C7C;
-    --ink-faint:#5E594E;
-    --rust:#C1421A;
-    --rust-dim:#8C3216;
-    --olive:#7C8A5E;
-    --olive-dim:#5C6746;
-    --steel:#5C7A8A;
-    --steel-dim:#456070;
-    --success:#7FA37A;
-    --line:#3A362F;
-    --danger:#B5462E;
+    --bg:#FFFFFF;
+    --surface:#F7F7F7;
+    --surface-raised:#EEEEEE;
+    --ink:#121212;
+    --ink-muted:#6E6E6E;
+    --ink-faint:#BFBFBF;
+    --rust:#A6192E;
+    --rust-dim:#7D1322;
+    --olive:#1A1A1A;
+    --olive-dim:#000000;
+    --steel:#8A8A8A;
+    --steel-dim:#5C5C5C;
+    --success:#1A1A1A;
+    --line:#E2E2E2;
+    --danger:#A6192E;
     --font-display:'Oswald',ui-sans-serif,system-ui,sans-serif;
     --font-body:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
     --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
@@ -69,11 +69,11 @@
     padding:10px 18px;cursor:pointer;text-transform:uppercase;transition:all .15s;
   }
   nav.tabs button:hover{color:var(--ink);border-color:var(--ink-faint);}
-  nav.tabs button.active{background:var(--rust);color:#F6EFE7;border-color:var(--rust);}
+  nav.tabs button.active{background:var(--rust);color:#FFFFFF;border-color:var(--rust);}
   .panel{display:none;}
   .panel.active{display:block;}
   h2.section-title{
-    font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:0.5px;
+    font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:0.3px;
     margin:0 0 4px;text-transform:uppercase;
   }
   p.section-hint{font-size:13px;color:var(--ink-muted);margin:0 0 20px;}
@@ -87,10 +87,10 @@
     padding:9px 16px;cursor:pointer;transition:all .15s;
   }
   .btn:hover{border-color:var(--rust);color:var(--rust);}
-  .btn-primary{background:var(--rust);color:#F6EFE7;border-color:var(--rust);}
-  .btn-primary:hover{background:var(--rust-dim);color:#F6EFE7;}
-  .btn-olive{background:var(--olive);color:#1C1B19;border-color:var(--olive);}
-  .btn-olive:hover{background:var(--olive-dim);color:#F6EFE7;}
+  .btn-primary{background:var(--rust);color:#FFFFFF;border-color:var(--rust);}
+  .btn-primary:hover{background:var(--rust-dim);color:#FFFFFF;}
+  .btn-olive{background:var(--olive);color:#FFFFFF;border-color:var(--olive);}
+  .btn-olive:hover{background:var(--olive-dim);color:#FFFFFF;}
   .btn-ghost{background:transparent;border-color:transparent;color:var(--ink-muted);padding:6px 10px;}
   .btn-ghost:hover{color:var(--danger);border-color:transparent;}
   .btn-sm{padding:6px 12px;font-size:11px;}
@@ -140,16 +140,21 @@
     background:var(--surface);color:var(--ink-muted);border:1px solid var(--line);
     padding:8px 14px;cursor:pointer;white-space:nowrap;
   }
-  .day-tabs button.active{background:var(--olive);color:#1C1B19;border-color:var(--olive);}
-  .heatmap-year{margin-bottom:22px;}
+  .day-tabs button.active{background:var(--olive);color:#FFFFFF;border-color:var(--olive);}
+  .heatmap-year{margin-bottom:30px;}
   .heatmap-year-header{
-    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;
-    font-family:var(--font-display);font-size:15px;color:var(--ink);letter-spacing:0.3px;
+    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;
+    font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--ink);letter-spacing:0.2px;
   }
-  .heatmap-count{font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);}
-  .heatmap-grid{display:flex;gap:3px;overflow-x:auto;padding-bottom:6px;}
-  .heatmap-col{display:flex;flex-direction:column;gap:3px;flex-shrink:0;}
-  .hm-cell{width:11px;height:11px;border-radius:2px;background:var(--surface-raised);border:1px solid var(--line);}
+  .heatmap-count{font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);align-self:flex-end;padding-bottom:5px;}
+  .heatmap-months{display:flex;gap:4px;margin-left:19px;margin-bottom:4px;}
+  .heatmap-months span{font-family:var(--font-mono);font-size:9px;color:var(--ink-muted);text-transform:uppercase;flex-shrink:0;}
+  .heatmap-body{display:flex;gap:6px;}
+  .heatmap-weekdays{display:flex;flex-direction:column;gap:4px;flex-shrink:0;padding-top:1px;}
+  .heatmap-weekdays span{width:13px;height:13px;font-family:var(--font-mono);font-size:8.5px;color:var(--ink-faint);line-height:13px;text-align:center;}
+  .heatmap-grid{display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;}
+  .heatmap-col{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+  .hm-cell{width:13px;height:13px;border-radius:50%;background:var(--surface-raised);border:1px solid var(--line);}
   .hm-cell.hm-trained{background:var(--rust);border-color:var(--rust);}
   .hm-cell.hm-trained.hm-multi{background:var(--ink);border-color:var(--ink);}
   .hm-cell.hm-empty-space{background:transparent;border-color:transparent;}
@@ -206,7 +211,7 @@
 <div id="app"><div class="loading">Caricamento diario…</div></div>
 
 <script>
-const STORAGE_KEYS = { workouts:'workouts', plan:'trainingPlan', diet:'dietPlan', progress:'progressEntries', photosIndex:'progressPhotosIndex', dietDocument:'dietDocumentMeta', planDocument:'planDocumentMeta', habits:'habitsList', habitLogs:'habitLogs', mindsetLogs:'mindsetLogs' };
+const STORAGE_KEYS = { workouts:'workouts', plan:'trainingPlan', diet:'dietPlan', progress:'progressEntries', photosIndex:'progressPhotosIndex', dietDocument:'dietDocumentMeta', planDocument:'planDocumentMeta', habits:'habitsList', habitLogs:'habitLogs', mindsetLogs:'mindsetLogs', planDays:'planDayLabels' };
 const DOC_CONFIG = {
   diet: { idbId:'diet-doc', metaKey:'dietDocument', title:'Documento dieta (nutrizionista)' },
   plan: { idbId:'plan-doc', metaKey:'planDocument', title:'Documento scheda (personal trainer)' }
@@ -275,10 +280,10 @@ function getDailyQuote(){
   return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
 }
 
-let state = { workouts: [], plan: {}, diet: {}, progress: [], photos: [], documents: { diet:null, plan:null }, habits: [], habitLogs: {}, mindsetLogs: {} };
+let state = { workouts: [], plan: {}, diet: {}, progress: [], photos: [], documents: { diet:null, plan:null }, habits: [], habitLogs: {}, mindsetLogs: {}, planDays: [] };
 let photoDataCache = {};
 let activeTab = 'diario';
-let activePlanDay = DAYS[0];
+let activePlanDay = null;
 let activeDietDay = DAYS[0];
 let activeWeekStart = getMonday(new Date());
 
@@ -296,28 +301,49 @@ let workoutFormExercises = [];
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 
+function defaultPlanDays(){ return ['Giorno 1','Giorno 2','Giorno 3','Giorno 4']; }
+
 function defaultPlan(){
-  const giornoA = [
+  const upperA = [
+    {name:'Panca piana', sets:'4', reps:'8-10', weight:''},
+    {name:'Rematore (bilanciere o manubrio)', sets:'4', reps:'8-10', weight:''},
+    {name:'Shoulder press manubri', sets:'3', reps:'10-12', weight:''},
+    {name:'Lat machine presa stretta', sets:'3', reps:'10-12', weight:''},
+    {name:'Curl bicipiti manubri', sets:'3', reps:'12', weight:''},
+    {name:'Push-down tricipiti ai cavi', sets:'3', reps:'12', weight:''},
+    {name:'Plank', sets:'3', reps:'40-60 sec', weight:''}
+  ];
+  const lowerA = [
+    {name:'Squat (bilanciere o Smith)', sets:'4', reps:'8-10', weight:''},
     {name:'Leg press', sets:'3', reps:'10-12', weight:''},
-    {name:'Panca piana', sets:'3', reps:'8-10', weight:''},
-    {name:'Lat machine (presa larga)', sets:'3', reps:'10-12', weight:''},
-    {name:'Shoulder press', sets:'3', reps:'10-12', weight:''},
     {name:'Leg curl', sets:'3', reps:'12', weight:''},
-    {name:'Plank', sets:'3', reps:'30-45 sec', weight:''}
+    {name:'Affondi con manubri', sets:'3', reps:'10 per gamba', weight:''},
+    {name:'Polpacci in piedi', sets:'4', reps:'15', weight:''},
+    {name:'Crunch ai cavi', sets:'3', reps:'15', weight:''}
   ];
-  const giornoB = [
-    {name:'Squat', sets:'3', reps:'10-12', weight:''},
-    {name:'Chest press', sets:'3', reps:'10-12', weight:''},
-    {name:'Seated row', sets:'3', reps:'10-12', weight:''},
-    {name:'Alzate laterali', sets:'3', reps:'12-15', weight:''},
+  const upperB = [
+    {name:'Chest press (macchina)', sets:'4', reps:'10', weight:''},
+    {name:'Lat machine presa larga', sets:'4', reps:'8-10', weight:''},
+    {name:'Alzate laterali manubri', sets:'3', reps:'15', weight:''},
+    {name:'Rematore basso ai cavi', sets:'3', reps:'10-12', weight:''},
+    {name:'Hammer curl manubri', sets:'3', reps:'12', weight:''},
+    {name:'Dip su macchina o panca', sets:'3', reps:'12', weight:''},
+    {name:'Russian twist', sets:'3', reps:'20', weight:''}
+  ];
+  const lowerB = [
+    {name:'Stacco rumeno (manubri o bilanciere)', sets:'4', reps:'8-10', weight:''},
     {name:'Leg extension', sets:'3', reps:'12', weight:''},
-    {name:'Crunch su cavo/macchina', sets:'3', reps:'15', weight:''}
+    {name:'Hip thrust', sets:'3', reps:'12', weight:''},
+    {name:'Affondi bulgari', sets:'3', reps:'10 per gamba', weight:''},
+    {name:'Polpacci da seduto', sets:'4', reps:'15', weight:''},
+    {name:'Mountain climbers', sets:'3', reps:'30 sec', weight:''}
   ];
-  const plan = Object.fromEntries(DAYS.map(d=>[d,[]]));
-  plan['Lunedì'] = giornoA.map(e=>({...e}));
-  plan['Mercoledì'] = giornoB.map(e=>({...e}));
-  plan['Venerdì'] = giornoA.map(e=>({...e}));
-  return plan;
+  return {
+    'Giorno 1': upperA.map(e=>({...e})),
+    'Giorno 2': lowerA.map(e=>({...e})),
+    'Giorno 3': upperB.map(e=>({...e})),
+    'Giorno 4': lowerB.map(e=>({...e}))
+  };
 }
 
 function defaultDiet(){
@@ -351,12 +377,47 @@ async function loadAll(){
     state.mindsetLogs = ml ? JSON.parse(ml) : {};
     state.documents.plan = pd ? JSON.parse(pd) : null;
     state.workouts = w ? JSON.parse(w) : [];
-    if(p){ state.plan = JSON.parse(p); } else { state.plan = defaultPlan(); seedPlan = true; }
+    const pdays = localStorage.getItem(STORAGE_KEYS.planDays);
+    if(p){
+      const parsedPlan = JSON.parse(p);
+      if(pdays){
+        // Already migrated to Giorno N structure
+        state.plan = parsedPlan;
+        state.planDays = JSON.parse(pdays);
+      } else {
+        // Old weekday-keyed structure (or unknown) -> migrate to Giorno N, keeping only days with exercises
+        const hasWeekdayKeys = DAYS.some(d=>parsedPlan[d]);
+        if(hasWeekdayKeys){
+          const migratedPlan = {};
+          const migratedDays = [];
+          let n = 1;
+          DAYS.forEach(d=>{
+            if(parsedPlan[d] && parsedPlan[d].length>0){
+              const label = 'Giorno '+n;
+              migratedPlan[label] = parsedPlan[d];
+              migratedDays.push(label);
+              n++;
+            }
+          });
+          if(migratedDays.length===0){ state.plan = defaultPlan(); state.planDays = defaultPlanDays(); }
+          else { state.plan = migratedPlan; state.planDays = migratedDays; }
+        } else {
+          // Unrecognized/empty structure -> treat as already Giorno-based, rebuild label list from its keys
+          state.plan = parsedPlan;
+          state.planDays = Object.keys(parsedPlan).length ? Object.keys(parsedPlan) : defaultPlanDays();
+        }
+        saveKey(STORAGE_KEYS.planDays, state.planDays);
+        saveKey(STORAGE_KEYS.plan, state.plan);
+      }
+    } else {
+      state.plan = defaultPlan(); state.planDays = defaultPlanDays(); seedPlan = true;
+    }
     if(d){ state.diet = JSON.parse(d); } else { state.diet = defaultDiet(); seedDiet = true; }
     state.progress = pr ? JSON.parse(pr) : [];
     state.photos = ph ? JSON.parse(ph) : [];
+    state.planDays.forEach(day=>{ if(!state.plan[day]) state.plan[day] = []; });
+    activePlanDay = state.planDays[0] || 'Giorno 1';
     DAYS.forEach(day=>{
-      if(!state.plan[day]) state.plan[day] = [];
       if(!state.diet[day]) state.diet[day] = Object.fromEntries(MEAL_SLOTS.map(s=>[s,[]]));
       MEAL_SLOTS.forEach(s=>{ if(!state.diet[day][s]) state.diet[day][s]=[]; });
       if(!state.diet[day].integratori) state.diet[day].integratori = [];
@@ -367,7 +428,7 @@ async function loadAll(){
     state.diet = defaultDiet();
   }
   render();
-  if(seedPlan) savePlan();
+  if(seedPlan){ savePlan(); saveKey(STORAGE_KEYS.planDays, state.planDays); }
   if(seedDiet) saveDiet();
 }
 
@@ -458,13 +519,13 @@ function showSaveError(key, retryFn){
   if(!banner){
     banner = document.createElement('div');
     banner.id = 'save-error-banner';
-    banner.style.cssText = 'position:sticky;top:0;z-index:10;background:var(--rust-dim);color:#F6EFE7;font-family:var(--font-mono);font-size:12px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;';
+    banner.style.cssText = 'position:sticky;top:0;z-index:10;background:var(--rust-dim);color:#FFFFFF;font-family:var(--font-mono);font-size:12px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;';
     document.getElementById('app').prepend(banner);
   }
   banner.innerHTML = `<span>Salvataggio non riuscito (${escapeHTML(key)}). Potrebbe essere pieno lo spazio disponibile sul telefono per quest'app.</span>`;
   const retryBtn = document.createElement('button');
   retryBtn.className = 'btn btn-sm';
-  retryBtn.style.cssText = 'border-color:#F6EFE7;color:#F6EFE7;flex-shrink:0;';
+  retryBtn.style.cssText = 'border-color:#FFFFFF;color:#FFFFFF;flex-shrink:0;';
   retryBtn.textContent = 'Riprova';
   retryBtn.addEventListener('click', retryFn);
   banner.appendChild(retryBtn);
@@ -477,6 +538,7 @@ function hideSaveError(){
 
 function saveWorkouts(){ saveKey(STORAGE_KEYS.workouts, state.workouts); }
 function savePlan(tagId){ saveKey(STORAGE_KEYS.plan, state.plan, tagId); }
+function savePlanDays(){ saveKey(STORAGE_KEYS.planDays, state.planDays); }
 function saveDiet(tagId){ saveKey(STORAGE_KEYS.diet, state.diet, tagId); }
 function saveProgress(){ saveKey(STORAGE_KEYS.progress, state.progress); }
 function savePhotosIndex(){ saveKey(STORAGE_KEYS.photosIndex, state.photos); }
@@ -700,6 +762,9 @@ function renderWorkoutHeatmap(){
   const currentYear = new Date().getFullYear();
   if(!years.includes(currentYear)) years.unshift(currentYear);
 
+  const weekdayLabels = ['L','M','M','G','V','S','D'];
+  const monthAbbr = ['GEN','FEB','MAR','APR','MAG','GIU','LUG','AGO','SET','OTT','NOV','DIC'];
+
   const html = years.map(year=>{
     const start = new Date(year,0,1);
     const end = year===currentYear ? new Date() : new Date(year,11,31);
@@ -720,6 +785,11 @@ function renderWorkoutHeatmap(){
 
     const count = state.workouts.filter(w=>w.date.slice(0,4)===''+year).length;
 
+    const monthsHTML = weeks.map(wk=>{
+      const firstOfMonth = wk.find(d=> d && d.getDate()===1 && d>=start && d<=end);
+      return `<span style="width:13px;">${firstOfMonth? monthAbbr[firstOfMonth.getMonth()] : ''}</span>`;
+    }).join('');
+
     const colsHTML = weeks.map(wk=>`<div class="heatmap-col">${wk.map(d=>{
       if(!d) return `<div class="hm-cell hm-empty-space"></div>`;
       const inRange = d>=start && d<=end;
@@ -733,11 +803,15 @@ function renderWorkoutHeatmap(){
     return `
       <div class="heatmap-year">
         <div class="heatmap-year-header"><span>${year}</span><span class="heatmap-count">${count} allenament${count===1?'o':'i'}</span></div>
-        <div class="heatmap-grid">${colsHTML}</div>
+        <div class="heatmap-months">${monthsHTML}</div>
+        <div class="heatmap-body">
+          <div class="heatmap-weekdays">${weekdayLabels.map(l=>`<span>${l}</span>`).join('')}</div>
+          <div class="heatmap-grid">${colsHTML}</div>
+        </div>
       </div>`;
   }).join('');
 
-  container.innerHTML = `<h2 class="section-title" style="font-size:16px;margin-bottom:10px;">Cronologia</h2>${html}`;
+  container.innerHTML = `<h2 class="section-title" style="font-size:16px;margin-bottom:14px;">Cronologia</h2>${html}`;
 }
 
 function renderDiario(){
@@ -922,17 +996,22 @@ function bindWorkoutForm(){
 /* ---------- SCHEDA ---------- */
 function renderScheda(){
   const el = document.getElementById('panel-scheda');
+  if(!activePlanDay || !state.planDays.includes(activePlanDay)) activePlanDay = state.planDays[0];
   el.innerHTML = `
     <h2 class="section-title">Scheda di allenamento</h2>
-    <p class="section-hint">La tua tabella settimanale: esercizi, serie, ripetizioni e peso target per ogni giorno.</p>
+    <p class="section-hint">I tuoi giorni di allenamento, in ordine — non legati ai giorni della settimana: usa Giorno 1, 2, 3... nell'ordine in cui ti alleni davvero.</p>
     <div id="plan-doc-section" style="margin-bottom:16px;"></div>
     <div class="day-tabs">
-      ${DAYS.map(d=>`<button data-day="${d}" class="${activePlanDay===d?'active':''}">${d.slice(0,3)}</button>`).join('')}
+      ${state.planDays.map(d=>`<button data-day="${d}" class="${activePlanDay===d?'active':''}">${escapeHTML(d)}</button>`).join('')}
+      <button id="plan-add-day" title="Aggiungi giorno" style="font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;background:transparent;color:var(--ink-muted);border:1px dashed var(--ink-faint);padding:8px 14px;cursor:pointer;white-space:nowrap;">+ Giorno</button>
     </div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
-        <span style="font-family:var(--font-display);font-size:16px;">${activePlanDay}</span>
-        <span class="autosave-tag" id="plan-autosave">salvato</span>
+        <span style="font-family:var(--font-display);font-size:16px;">${escapeHTML(activePlanDay)}</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="autosave-tag" id="plan-autosave">salvato</span>
+          <button class="btn btn-ghost btn-sm" id="plan-del-day">Elimina giorno</button>
+        </div>
       </div>
       <div id="plan-rows"></div>
       <div class="row" style="margin-top:12px;">
@@ -944,7 +1023,26 @@ function renderScheda(){
       <button class="btn btn-olive btn-sm" id="plan-add-row">+ Aggiungi riga</button>
     </div>
   `;
-  el.querySelectorAll('.day-tabs button').forEach(b=>b.addEventListener('click',()=>{ activePlanDay=b.dataset.day; renderScheda(); }));
+  el.querySelectorAll('.day-tabs button[data-day]').forEach(b=>b.addEventListener('click',()=>{ activePlanDay=b.dataset.day; renderScheda(); }));
+  document.getElementById('plan-add-day').addEventListener('click', ()=>{
+    let n = state.planDays.length+1;
+    let label = 'Giorno '+n;
+    while(state.planDays.includes(label)){ n++; label = 'Giorno '+n; }
+    state.planDays.push(label);
+    state.plan[label] = [];
+    activePlanDay = label;
+    savePlanDays(); savePlan();
+    renderScheda();
+  });
+  document.getElementById('plan-del-day').addEventListener('click', ()=>{
+    if(state.planDays.length<=1){ alert('Deve restare almeno un giorno.'); return; }
+    if(!confirm(`Eliminare "${activePlanDay}" e tutti i suoi esercizi?`)) return;
+    delete state.plan[activePlanDay];
+    state.planDays = state.planDays.filter(d=>d!==activePlanDay);
+    activePlanDay = state.planDays[0];
+    savePlanDays(); savePlan();
+    renderScheda();
+  });
   const rows = state.plan[activePlanDay] || [];
   const rowsEl = document.getElementById('plan-rows');
   rowsEl.innerHTML = rows.length ? rows.map((r,i)=>`
@@ -953,7 +1051,7 @@ function renderScheda(){
       <span class="detail">${escapeHTML(r.sets)} × ${escapeHTML(r.reps)}${r.weight? ' — '+escapeHTML(r.weight)+' kg':''}</span>
       <button class="btn btn-ghost btn-sm" data-del-plan="${i}">✕</button>
     </div>
-  `).join('') : `<div class="empty-state">Nessun esercizio per ${activePlanDay}. Aggiungine uno qui sotto.</div>`;
+  `).join('') : `<div class="empty-state">Nessun esercizio per ${escapeHTML(activePlanDay)}. Aggiungine uno qui sotto.</div>`;
   rowsEl.querySelectorAll('[data-del-plan]').forEach(b=>{
     b.addEventListener('click', ()=>{
       state.plan[activePlanDay].splice(+b.dataset.delPlan,1);
@@ -1243,7 +1341,7 @@ function renderHabitsChart(){
     el.parentElement.innerHTML = `<div class="empty-state" style="height:100%;display:flex;align-items:center;justify-content:center;">Nessun dato ancora — inizia a segnare abitudini o check-in.</div>`;
     return;
   }
-  el.parentElement.innerHTML = svgLineChart(weeks.map(w=>({label:w.label,value:w.pct})), '#C1421A', '% Abitudini completate (per settimana)');
+  el.parentElement.innerHTML = svgLineChart(weeks.map(w=>({label:w.label,value:w.pct})), '#A6192E', '% Abitudini completate (per settimana)');
 }
 
 function renderProgressi(){
@@ -1392,13 +1490,13 @@ function svgLineChart(data, color, title){
   const pathD = pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
   const areaD = pathD + ` L${pts[pts.length-1][0].toFixed(1)},${(padT+innerH).toFixed(1)} L${pts[0][0].toFixed(1)},${(padT+innerH).toFixed(1)} Z`;
   const labelEvery = Math.max(1, Math.ceil(data.length/6));
-  const xLabels = pts.map((p,i)=> i%labelEvery===0 || i===pts.length-1 ? `<text x="${p[0].toFixed(1)}" y="${h-8}" font-size="9" fill="#948C7C" font-family="'JetBrains Mono',monospace" text-anchor="middle">${escapeHTML(data[i].label)}</text>` : '').join('');
+  const xLabels = pts.map((p,i)=> i%labelEvery===0 || i===pts.length-1 ? `<text x="${p[0].toFixed(1)}" y="${h-8}" font-size="9" fill="#6E6E6E" font-family="'JetBrains Mono',monospace" text-anchor="middle">${escapeHTML(data[i].label)}</text>` : '').join('');
   const circles = pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="${color}"/>`).join('');
-  const yTop = `<text x="4" y="${padT+4}" font-size="9" fill="#948C7C" font-family="'JetBrains Mono',monospace">${spanMax.toFixed(1)}</text>`;
-  const yBot = `<text x="4" y="${padT+innerH}" font-size="9" fill="#948C7C" font-family="'JetBrains Mono',monospace">${spanMin.toFixed(1)}</text>`;
+  const yTop = `<text x="4" y="${padT+4}" font-size="9" fill="#6E6E6E" font-family="'JetBrains Mono',monospace">${spanMax.toFixed(1)}</text>`;
+  const yBot = `<text x="4" y="${padT+innerH}" font-size="9" fill="#6E6E6E" font-family="'JetBrains Mono',monospace">${spanMin.toFixed(1)}</text>`;
   return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:100%;">
-    <text x="${padL}" y="14" font-size="11" fill="#ECE7DD" font-family="'JetBrains Mono',monospace" font-weight="700">${escapeHTML(title)}</text>
-    <line x1="${padL}" y1="${padT+innerH}" x2="${padL+innerW}" y2="${padT+innerH}" stroke="#3A362F" stroke-width="1"/>
+    <text x="${padL}" y="14" font-size="11" fill="#121212" font-family="'JetBrains Mono',monospace" font-weight="700">${escapeHTML(title)}</text>
+    <line x1="${padL}" y1="${padT+innerH}" x2="${padL+innerW}" y2="${padT+innerH}" stroke="#E2E2E2" stroke-width="1"/>
     <path d="${areaD}" fill="${color}22" stroke="none"/>
     <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2"/>
     ${circles}
@@ -1411,11 +1509,11 @@ function renderCharts(sorted){
   const weightEl = document.getElementById('weight-chart');
   const bfEl = document.getElementById('bf-chart');
   const weightData = sorted.map(e=>({label:formatDateShort(e.date), value:e.weight}));
-  weightEl.parentElement.innerHTML = svgLineChart(weightData, '#C1421A', 'Peso (kg)');
+  weightEl.parentElement.innerHTML = svgLineChart(weightData, '#A6192E', 'Peso (kg)');
   const bfData = sorted.filter(e=>e.bodyFat).map(e=>({label:formatDateShort(e.date), value:e.bodyFat}));
   document.getElementById('bf-chart') ? null : null;
   const bfWrap = weightEl.parentElement.nextElementSibling;
-  bfWrap.innerHTML = svgLineChart(bfData, '#7C8A5E', 'Massa grassa (%)');
+  bfWrap.innerHTML = svgLineChart(bfData, '#8A8A8A', 'Massa grassa (%)');
 }
 
 /* ---------- utils ---------- */
